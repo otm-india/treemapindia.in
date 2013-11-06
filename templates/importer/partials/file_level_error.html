@@ -1,0 +1,31 @@
+{% load url from future %}
+
+<h1> There were errors reading the file structure: </h1>
+
+{% for error in event.errors_as_array %}
+  {% if error.code == 2 %}
+    <div>The uploaded file must contain a 'point x' and 'point y' field</div>
+  {% else %}
+    {% if error.code == 3 %}
+      <div>There were some fields in the file that didn't match the template:
+        <ul>
+          {% for item in error.data %}
+            {% if item %}
+            <li>{{ item }}</li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      </div>
+    {% else %}
+      {% if error.code == 4 %}
+        <div>
+          {{ error.msg }}
+        </div>
+      {% else %}
+        <div>{{ error }}</div>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+<a href="{% url 'importer.views.list_imports' %}">Back to Uploads</a>

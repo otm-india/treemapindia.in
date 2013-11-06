@@ -1,0 +1,540 @@
+BEGIN;
+CREATE TABLE "treemap_benefitvalues" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "area" varchar(255) NOT NULL,
+    "stormwater" double precision NOT NULL,
+    "electricity" double precision NOT NULL,
+    "natural_gas" double precision NOT NULL,
+    "co2" double precision NOT NULL,
+    "ozone" double precision NOT NULL,
+    "nox" double precision NOT NULL,
+    "pm10" double precision NOT NULL,
+    "sox" double precision NOT NULL,
+    "voc" double precision NOT NULL,
+    "bvoc" double precision NOT NULL
+)
+;
+CREATE TABLE "treemap_commentflag" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "flagged" boolean NOT NULL,
+    "flagged_date" timestamp with time zone NOT NULL,
+    "comment_id" integer NOT NULL REFERENCES "threadedcomments_threadedcomment" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "user_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED
+)
+;
+CREATE TABLE "treemap_neighborhood" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "name" varchar(255) NOT NULL,
+    "region_id" integer NOT NULL,
+    "city" varchar(255) NOT NULL,
+    "county" varchar(255) NOT NULL,
+    "state" varchar(2) NOT NULL
+)
+;
+CREATE TABLE "treemap_supervisordistrict" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "supervisor" varchar(255) NOT NULL
+)
+;
+CREATE TABLE "treemap_zipcode" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "zip" varchar(255) NOT NULL
+)
+;
+CREATE TABLE "treemap_exclusionmask" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "type" varchar(50)
+)
+;
+CREATE TABLE "treemap_resource" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "meta_species" varchar(150),
+    "region" varchar(150),
+    "hydro_interception_dbh" text,
+    "aq_ozone_dep_dbh" text,
+    "aq_nox_dep_dbh" text,
+    "aq_pm10_dep_dbh" text,
+    "aq_sox_dep_dbh" text,
+    "aq_nox_avoided_dbh" text,
+    "aq_pm10_avoided_dbh" text,
+    "aq_sox_avoided_dbh" text,
+    "aq_voc_avoided_dbh" text,
+    "bvoc_dbh" text,
+    "co2_sequestered_dbh" text,
+    "co2_avoided_dbh" text,
+    "natural_gas_dbh" text,
+    "electricity_dbh" text,
+    "co2_storage_dbh" text
+)
+;
+CREATE TABLE "treemap_species_resource" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "species_id" integer NOT NULL,
+    "resource_id" integer NOT NULL REFERENCES "treemap_resource" ("id") DEFERRABLE INITIALLY DEFERRED,
+    UNIQUE ("species_id", "resource_id")
+)
+;
+CREATE TABLE "treemap_species" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "symbol" varchar(255) NOT NULL,
+    "alternate_symbol" varchar(255),
+    "itree_code" varchar(255),
+    "scientific_name" varchar(255) NOT NULL,
+    "genus" varchar(255) NOT NULL,
+    "species" varchar(255),
+    "cultivar_name" varchar(255),
+    "gender" varchar(50),
+    "common_name" varchar(255),
+    "family" varchar(255),
+    "other_part_of_name" varchar(255),
+    "native_status" varchar(255),
+    "bloom_period" varchar(255),
+    "fruit_period" varchar(255),
+    "fall_conspicuous" boolean,
+    "flower_conspicuous" boolean,
+    "palatable_human" boolean,
+    "wildlife_value" boolean,
+    "fact_sheet" varchar(255),
+    "plant_guide" varchar(255),
+    "tree_count" integer NOT NULL,
+    "v_max_dbh" integer,
+    "v_max_height" integer,
+    "v_multiple_trunks" boolean
+)
+;
+ALTER TABLE "treemap_species_resource" ADD CONSTRAINT "species_id_refs_id_f3c6e51f" FOREIGN KEY ("species_id") REFERENCES "treemap_species" ("id") DEFERRABLE INITIALLY DEFERRED;
+CREATE TABLE "treemap_geocodecache" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "address_street" varchar(256) NOT NULL,
+    "geocoded_address" varchar(256) NOT NULL,
+    "geocoded_lat" double precision,
+    "geocoded_lon" double precision,
+    "geocoded_accuracy" integer
+)
+;
+CREATE TABLE "treemap_importevent" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "file_name" varchar(256) NOT NULL,
+    "import_date" date NOT NULL
+)
+;
+CREATE TABLE "treemap_plot_neighborhood" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "plot_id" integer NOT NULL,
+    "neighborhood_id" integer NOT NULL REFERENCES "treemap_neighborhood" ("id") DEFERRABLE INITIALLY DEFERRED,
+    UNIQUE ("plot_id", "neighborhood_id")
+)
+;
+CREATE TABLE "treemap_plot_audit" (
+    "_audit_user_rep" integer NOT NULL,
+    "_audit_diff" text NOT NULL,
+    "_audit_verified" integer NOT NULL,
+    "present" boolean NOT NULL,
+    "width" double precision,
+    "length" double precision,
+    "type" varchar(256),
+    "powerline_conflict_potential" varchar(256),
+    "sidewalk_damage" varchar(256),
+    "address_street" varchar(256),
+    "address_city" varchar(256),
+    "address_zip" varchar(30),
+    "neighborhoods" varchar(150),
+    "zipcode_id" integer REFERENCES "treemap_zipcode" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "geocoded_accuracy" integer,
+    "geocoded_address" varchar(256),
+    "geocoded_lat" double precision,
+    "geocoded_lon" double precision,
+    "last_updated" timestamp with time zone NOT NULL,
+    "last_updated_by_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "import_event_id" integer NOT NULL REFERENCES "treemap_importevent" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "data_owner_id" integer REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "owner_orig_id" varchar(256),
+    "owner_additional_id" varchar(255),
+    "owner_additional_properties" text,
+    "readonly" boolean NOT NULL,
+    "_audit_id" serial NOT NULL PRIMARY KEY,
+    "_audit_timestamp" timestamp with time zone NOT NULL,
+    "_audit_change_type" varchar(1) NOT NULL,
+    "id" integer NOT NULL
+)
+;
+CREATE TABLE "treemap_plot" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "present" boolean NOT NULL,
+    "width" double precision,
+    "length" double precision,
+    "type" varchar(256),
+    "powerline_conflict_potential" varchar(256),
+    "sidewalk_damage" varchar(256),
+    "address_street" varchar(256),
+    "address_city" varchar(256),
+    "address_zip" varchar(30),
+    "neighborhoods" varchar(150),
+    "zipcode_id" integer REFERENCES "treemap_zipcode" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "geocoded_accuracy" integer,
+    "geocoded_address" varchar(256),
+    "geocoded_lat" double precision,
+    "geocoded_lon" double precision,
+    "last_updated" timestamp with time zone NOT NULL,
+    "last_updated_by_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "import_event_id" integer NOT NULL REFERENCES "treemap_importevent" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "data_owner_id" integer REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "owner_orig_id" varchar(256),
+    "owner_additional_id" varchar(255),
+    "owner_additional_properties" text,
+    "readonly" boolean NOT NULL
+)
+;
+ALTER TABLE "treemap_plot_neighborhood" ADD CONSTRAINT "plot_id_refs_id_5769cdc3" FOREIGN KEY ("plot_id") REFERENCES "treemap_plot" ("id") DEFERRABLE INITIALLY DEFERRED;
+CREATE TABLE "treemap_tree_audit" (
+    "_audit_user_rep" integer NOT NULL,
+    "_audit_diff" text NOT NULL,
+    "_audit_verified" integer NOT NULL,
+    "plot_id" integer NOT NULL REFERENCES "treemap_plot" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "tree_owner" varchar(256),
+    "steward_name" varchar(256),
+    "steward_user_id" integer REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "sponsor" varchar(256),
+    "species_id" integer REFERENCES "treemap_species" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "species_other1" varchar(255),
+    "species_other2" varchar(255),
+    "orig_species" varchar(256),
+    "dbh" double precision,
+    "height" double precision,
+    "canopy_height" double precision,
+    "date_planted" date,
+    "date_removed" date,
+    "present" boolean NOT NULL,
+    "last_updated" timestamp with time zone NOT NULL,
+    "last_updated_by_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "s_order" integer,
+    "photo_count" integer,
+    "projects" varchar(20),
+    "import_event_id" integer NOT NULL REFERENCES "treemap_importevent" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "condition" varchar(256),
+    "canopy_condition" varchar(256),
+    "readonly" boolean NOT NULL,
+    "url" varchar(255),
+    "pests" varchar(256),
+    "tree_number" integer,
+    "prabhagid" integer,
+    "clusterid" integer,
+    "propertyid" varchar(256),
+    "girth_m" integer,
+    "height_m" integer,
+    "nest" varchar(256),
+    "burrows" varchar(256),
+    "flowers" varchar(256),
+    "fruits" varchar(256),
+    "nails" varchar(256),
+    "poster" varchar(256),
+    "wires" varchar(256),
+    "tree_guard" varchar(256),
+    "other_nuisance" boolean NOT NULL,
+    "other_nuisance_desc" varchar(256),
+    "health_of_tree" varchar(256),
+    "ground_type" varchar(256),
+    "ground_desc" varchar(256),
+    "risk_due_to_tree" varchar(256),
+    "risc_desc" varchar(256),
+    "refer_to_dept" varchar(256),
+    "special_other" varchar(256),
+    "special_other_desc" varchar(256),
+    "latitude" double precision,
+    "longitude" double precision,
+    "creation_date" timestamp with time zone,
+    "device_id" varchar(12),
+    "surveyor_id" varchar(256),
+    "session_id" integer,
+    "photo_focused1" varchar(100),
+    "photo_focused2" varchar(100),
+    "photo_panorama1" varchar(100),
+    "photo_panorama2" varchar(100),
+    "photo_other" varchar(100),
+    "_audit_id" serial NOT NULL PRIMARY KEY,
+    "_audit_timestamp" timestamp with time zone NOT NULL,
+    "_audit_change_type" varchar(1) NOT NULL,
+    "id" integer NOT NULL
+)
+;
+CREATE TABLE "treemap_tree" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "plot_id" integer NOT NULL REFERENCES "treemap_plot" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "tree_owner" varchar(256),
+    "steward_name" varchar(256),
+    "steward_user_id" integer REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "sponsor" varchar(256),
+    "species_id" integer REFERENCES "treemap_species" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "species_other1" varchar(255),
+    "species_other2" varchar(255),
+    "orig_species" varchar(256),
+    "dbh" double precision,
+    "height" double precision,
+    "canopy_height" double precision,
+    "date_planted" date,
+    "date_removed" date,
+    "present" boolean NOT NULL,
+    "last_updated" timestamp with time zone NOT NULL,
+    "last_updated_by_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "s_order" integer,
+    "photo_count" integer,
+    "projects" varchar(20),
+    "import_event_id" integer NOT NULL REFERENCES "treemap_importevent" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "condition" varchar(256),
+    "canopy_condition" varchar(256),
+    "readonly" boolean NOT NULL,
+    "url" varchar(255),
+    "pests" varchar(256),
+    "tree_number" integer,
+    "prabhagid" integer,
+    "clusterid" integer,
+    "propertyid" varchar(256),
+    "girth_m" integer,
+    "height_m" integer,
+    "nest" varchar(256),
+    "burrows" varchar(256),
+    "flowers" varchar(256),
+    "fruits" varchar(256),
+    "nails" varchar(256),
+    "poster" varchar(256),
+    "wires" varchar(256),
+    "tree_guard" varchar(256),
+    "other_nuisance" boolean NOT NULL,
+    "other_nuisance_desc" varchar(256),
+    "health_of_tree" varchar(256),
+    "ground_type" varchar(256),
+    "ground_desc" varchar(256),
+    "risk_due_to_tree" varchar(256),
+    "risc_desc" varchar(256),
+    "refer_to_dept" varchar(256),
+    "special_other" varchar(256),
+    "special_other_desc" varchar(256),
+    "latitude" double precision,
+    "longitude" double precision,
+    "creation_date" timestamp with time zone,
+    "device_id" varchar(12),
+    "surveyor_id" varchar(256),
+    "session_id" integer,
+    "photo_focused1" varchar(100),
+    "photo_focused2" varchar(100),
+    "photo_panorama1" varchar(100),
+    "photo_panorama2" varchar(100),
+    "photo_other" varchar(100)
+)
+;      
+CREATE TABLE "treemap_pending" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "field" varchar(255) NOT NULL,
+    "value" varchar(255),
+    "text_value" varchar(255),
+    "submitted" timestamp with time zone NOT NULL,
+    "submitted_by_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "status" varchar(10) NOT NULL,
+    "updated" timestamp with time zone NOT NULL,
+    "updated_by_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED
+)
+;
+CREATE TABLE "treemap_treepending" (
+    "pending_ptr_id" integer NOT NULL PRIMARY KEY REFERENCES "treemap_pending" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "tree_id" integer NOT NULL REFERENCES "treemap_tree" ("id") DEFERRABLE INITIALLY DEFERRED
+)
+;
+CREATE TABLE "treemap_plotpending" (
+    "pending_ptr_id" integer NOT NULL PRIMARY KEY REFERENCES "treemap_pending" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "plot_id" integer NOT NULL REFERENCES "treemap_plot" ("id") DEFERRABLE INITIALLY DEFERRED
+)
+;
+CREATE TABLE "treemap_treewatch" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "key" varchar(255) NOT NULL,
+    "value" varchar(255) NOT NULL,
+    "tree_id" integer NOT NULL REFERENCES "treemap_tree" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "severity" integer NOT NULL,
+    "valid" boolean NOT NULL
+)
+;
+CREATE TABLE "treemap_treefavorite" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "user_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "date_created" timestamp with time zone NOT NULL,
+    "tree_id" integer NOT NULL REFERENCES "treemap_tree" ("id") DEFERRABLE INITIALLY DEFERRED
+)
+;
+CREATE TABLE "treemap_stewardship" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "performed_by_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "performed_date" timestamp with time zone NOT NULL
+)
+;
+CREATE TABLE "treemap_treestewardship" (
+    "stewardship_ptr_id" integer NOT NULL PRIMARY KEY REFERENCES "treemap_stewardship" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "activity" varchar(256),
+    "tree_id" integer NOT NULL REFERENCES "treemap_tree" ("id") DEFERRABLE INITIALLY DEFERRED
+)
+;
+CREATE TABLE "treemap_plotstewardship" (
+    "stewardship_ptr_id" integer NOT NULL PRIMARY KEY REFERENCES "treemap_stewardship" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "activity" varchar(256),
+    "plot_id" integer NOT NULL REFERENCES "treemap_plot" ("id") DEFERRABLE INITIALLY DEFERRED
+)
+;
+CREATE TABLE "treemap_treeflags" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "reported" timestamp with time zone NOT NULL,
+    "reported_by_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "tree_id" integer NOT NULL REFERENCES "treemap_tree" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "comment" text NOT NULL,
+    "key" varchar(256) NOT NULL,
+    "value" timestamp with time zone NOT NULL
+)
+;
+CREATE TABLE "treemap_treephoto" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "reported" timestamp with time zone NOT NULL,
+    "reported_by_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "tree_id" integer NOT NULL REFERENCES "treemap_tree" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "comment" text NOT NULL,
+    "title" varchar(256),
+    "photo" varchar(100) NOT NULL
+)
+;
+CREATE TABLE "treemap_treealert" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "reported" timestamp with time zone NOT NULL,
+    "reported_by_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "tree_id" integer NOT NULL REFERENCES "treemap_tree" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "comment" text NOT NULL,
+    "key" varchar(256) NOT NULL,
+    "value" timestamp with time zone NOT NULL,
+    "solved" boolean NOT NULL
+)
+;
+CREATE TABLE "treemap_treeaction" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "reported" timestamp with time zone NOT NULL,
+    "reported_by_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "tree_id" integer NOT NULL REFERENCES "treemap_tree" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "comment" text NOT NULL,
+    "key" varchar(256) NOT NULL,
+    "value" timestamp with time zone NOT NULL
+)
+;
+CREATE TABLE "treemap_resourcesummarymodel" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "annual_stormwater_management" double precision NOT NULL,
+    "annual_electricity_conserved" double precision NOT NULL,
+    "annual_energy_conserved" double precision NOT NULL,
+    "annual_natural_gas_conserved" double precision NOT NULL,
+    "annual_air_quality_improvement" double precision NOT NULL,
+    "annual_co2_sequestered" double precision NOT NULL,
+    "annual_co2_avoided" double precision NOT NULL,
+    "annual_co2_reduced" double precision NOT NULL,
+    "total_co2_stored" double precision NOT NULL,
+    "annual_ozone" double precision NOT NULL,
+    "annual_nox" double precision NOT NULL,
+    "annual_pm10" double precision NOT NULL,
+    "annual_sox" double precision NOT NULL,
+    "annual_voc" double precision NOT NULL,
+    "annual_bvoc" double precision NOT NULL
+)
+;
+CREATE TABLE "treemap_treeresource" (
+    "resourcesummarymodel_ptr_id" integer NOT NULL UNIQUE REFERENCES "treemap_resourcesummarymodel" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "tree_id" integer NOT NULL PRIMARY KEY REFERENCES "treemap_tree" ("id") DEFERRABLE INITIALLY DEFERRED
+)
+;
+CREATE TABLE "treemap_aggregatesummarymodel" (
+    "resourcesummarymodel_ptr_id" integer NOT NULL PRIMARY KEY REFERENCES "treemap_resourcesummarymodel" ("id") DEFERRABLE INITIALLY DEFERRED,
+    "last_updated" timestamp with time zone NOT NULL,
+    "total_trees" integer NOT NULL,
+    "total_plots" integer NOT NULL
+)
+;
+CREATE TABLE "treemap_aggregatesearchresult" (
+    "aggregatesummarymodel_ptr_id" integer NOT NULL PRIMARY KEY REFERENCES "treemap_aggregatesummarymodel" ("resourcesummarymodel_ptr_id") DEFERRABLE INITIALLY DEFERRED,
+    "key" varchar(256) NOT NULL UNIQUE
+)
+;
+CREATE TABLE "treemap_aggregateneighborhood" (
+    "aggregatesummarymodel_ptr_id" integer NOT NULL PRIMARY KEY REFERENCES "treemap_aggregatesummarymodel" ("resourcesummarymodel_ptr_id") DEFERRABLE INITIALLY DEFERRED,
+    "location_id" integer NOT NULL UNIQUE REFERENCES "treemap_neighborhood" ("id") DEFERRABLE INITIALLY DEFERRED
+)
+;
+CREATE TABLE "treemap_aggregatesupervisordistrict" (
+    "aggregatesummarymodel_ptr_id" integer NOT NULL PRIMARY KEY REFERENCES "treemap_aggregatesummarymodel" ("resourcesummarymodel_ptr_id") DEFERRABLE INITIALLY DEFERRED,
+    "location_id" integer NOT NULL UNIQUE REFERENCES "treemap_supervisordistrict" ("id") DEFERRABLE INITIALLY DEFERRED
+)
+;
+CREATE TABLE "treemap_aggregatezipcode" (
+    "aggregatesummarymodel_ptr_id" integer NOT NULL PRIMARY KEY REFERENCES "treemap_aggregatesummarymodel" ("resourcesummarymodel_ptr_id") DEFERRABLE INITIALLY DEFERRED,
+    "location_id" integer NOT NULL UNIQUE REFERENCES "treemap_zipcode" ("id") DEFERRABLE INITIALLY DEFERRED
+)
+;
+CREATE INDEX "treemap_commentflag_comment_id" ON "treemap_commentflag" ("comment_id");
+CREATE INDEX "treemap_commentflag_user_id" ON "treemap_commentflag" ("user_id");
+SELECT AddGeometryColumn('treemap_neighborhood', 'geometry', 4326, 'MULTIPOLYGON', 2);
+ALTER TABLE "treemap_neighborhood" ALTER "geometry" SET NOT NULL;
+CREATE INDEX "treemap_neighborhood_geometry_id" ON "treemap_neighborhood" USING GIST ( "geometry" GIST_GEOMETRY_OPS );
+SELECT AddGeometryColumn('treemap_supervisordistrict', 'geometry', 4326, 'MULTIPOLYGON', 2);
+ALTER TABLE "treemap_supervisordistrict" ALTER "geometry" SET NOT NULL;
+CREATE INDEX "treemap_supervisordistrict_geometry_id" ON "treemap_supervisordistrict" USING GIST ( "geometry" GIST_GEOMETRY_OPS );
+SELECT AddGeometryColumn('treemap_zipcode', 'geometry', 4326, 'MULTIPOLYGON', 2);
+ALTER TABLE "treemap_zipcode" ALTER "geometry" SET NOT NULL;
+CREATE INDEX "treemap_zipcode_geometry_id" ON "treemap_zipcode" USING GIST ( "geometry" GIST_GEOMETRY_OPS );
+SELECT AddGeometryColumn('treemap_exclusionmask', 'geometry', 4326, 'MULTIPOLYGON', 2);
+ALTER TABLE "treemap_exclusionmask" ALTER "geometry" SET NOT NULL;
+CREATE INDEX "treemap_exclusionmask_geometry_id" ON "treemap_exclusionmask" USING GIST ( "geometry" GIST_GEOMETRY_OPS );
+CREATE INDEX "treemap_species_tree_count" ON "treemap_species" ("tree_count");
+SELECT AddGeometryColumn('treemap_geocodecache', 'geocoded_geometry', 4326, 'POINT', 2);
+CREATE INDEX "treemap_geocodecache_geocoded_geometry_id" ON "treemap_geocodecache" USING GIST ( "geocoded_geometry" GIST_GEOMETRY_OPS );
+SELECT AddGeometryColumn('treemap_geocodecache', 'geometry', 4326, 'POINT', 2);
+CREATE INDEX "treemap_geocodecache_geometry_id" ON "treemap_geocodecache" USING GIST ( "geometry" GIST_GEOMETRY_OPS );
+CREATE INDEX "treemap_plot_audit_zipcode_id" ON "treemap_plot_audit" ("zipcode_id");
+SELECT AddGeometryColumn('treemap_plot_audit', 'geometry', 4326, 'POINT', 2);
+ALTER TABLE "treemap_plot_audit" ALTER "geometry" SET NOT NULL;
+CREATE INDEX "treemap_plot_audit_geometry_id" ON "treemap_plot_audit" USING GIST ( "geometry" GIST_GEOMETRY_OPS );
+CREATE INDEX "treemap_plot_audit_last_updated_by_id" ON "treemap_plot_audit" ("last_updated_by_id");
+CREATE INDEX "treemap_plot_audit_import_event_id" ON "treemap_plot_audit" ("import_event_id");
+CREATE INDEX "treemap_plot_audit_data_owner_id" ON "treemap_plot_audit" ("data_owner_id");
+CREATE INDEX "treemap_plot_audit__audit_timestamp" ON "treemap_plot_audit" ("_audit_timestamp");
+CREATE INDEX "treemap_plot_audit_id" ON "treemap_plot_audit" ("id");
+CREATE INDEX "treemap_plot_zipcode_id" ON "treemap_plot" ("zipcode_id");
+SELECT AddGeometryColumn('treemap_plot', 'geometry', 4326, 'POINT', 2);
+ALTER TABLE "treemap_plot" ALTER "geometry" SET NOT NULL;
+CREATE INDEX "treemap_plot_geometry_id" ON "treemap_plot" USING GIST ( "geometry" GIST_GEOMETRY_OPS );
+CREATE INDEX "treemap_plot_last_updated_by_id" ON "treemap_plot" ("last_updated_by_id");
+CREATE INDEX "treemap_plot_import_event_id" ON "treemap_plot" ("import_event_id");
+CREATE INDEX "treemap_plot_data_owner_id" ON "treemap_plot" ("data_owner_id");
+CREATE INDEX "treemap_tree_audit_plot_id" ON "treemap_tree_audit" ("plot_id");
+CREATE INDEX "treemap_tree_audit_steward_user_id" ON "treemap_tree_audit" ("steward_user_id");
+CREATE INDEX "treemap_tree_audit_species_id" ON "treemap_tree_audit" ("species_id");
+CREATE INDEX "treemap_tree_audit_last_updated_by_id" ON "treemap_tree_audit" ("last_updated_by_id");
+CREATE INDEX "treemap_tree_audit_import_event_id" ON "treemap_tree_audit" ("import_event_id");
+CREATE INDEX "treemap_tree_audit__audit_timestamp" ON "treemap_tree_audit" ("_audit_timestamp");
+CREATE INDEX "treemap_tree_audit_id" ON "treemap_tree_audit" ("id");
+CREATE INDEX "treemap_tree_plot_id" ON "treemap_tree" ("plot_id");
+CREATE INDEX "treemap_tree_steward_user_id" ON "treemap_tree" ("steward_user_id");
+CREATE INDEX "treemap_tree_species_id" ON "treemap_tree" ("species_id");
+CREATE INDEX "treemap_tree_last_updated_by_id" ON "treemap_tree" ("last_updated_by_id");
+CREATE INDEX "treemap_tree_import_event_id" ON "treemap_tree" ("import_event_id");
+CREATE INDEX "treemap_pending_submitted_by_id" ON "treemap_pending" ("submitted_by_id");
+CREATE INDEX "treemap_pending_updated_by_id" ON "treemap_pending" ("updated_by_id");
+CREATE INDEX "treemap_treepending_tree_id" ON "treemap_treepending" ("tree_id");
+CREATE INDEX "treemap_plotpending_plot_id" ON "treemap_plotpending" ("plot_id");
+SELECT AddGeometryColumn('treemap_plotpending', 'geometry', 4326, 'POINT', 2);
+CREATE INDEX "treemap_plotpending_geometry_id" ON "treemap_plotpending" USING GIST ( "geometry" GIST_GEOMETRY_OPS );
+CREATE INDEX "treemap_treewatch_tree_id" ON "treemap_treewatch" ("tree_id");
+CREATE INDEX "treemap_treefavorite_user_id" ON "treemap_treefavorite" ("user_id");
+CREATE INDEX "treemap_treefavorite_tree_id" ON "treemap_treefavorite" ("tree_id");
+CREATE INDEX "treemap_stewardship_performed_by_id" ON "treemap_stewardship" ("performed_by_id");
+CREATE INDEX "treemap_treestewardship_tree_id" ON "treemap_treestewardship" ("tree_id");
+CREATE INDEX "treemap_plotstewardship_plot_id" ON "treemap_plotstewardship" ("plot_id");
+CREATE INDEX "treemap_treeflags_reported_by_id" ON "treemap_treeflags" ("reported_by_id");
+CREATE INDEX "treemap_treeflags_tree_id" ON "treemap_treeflags" ("tree_id");
+CREATE INDEX "treemap_treephoto_reported_by_id" ON "treemap_treephoto" ("reported_by_id");
+CREATE INDEX "treemap_treephoto_tree_id" ON "treemap_treephoto" ("tree_id");
+CREATE INDEX "treemap_treealert_reported_by_id" ON "treemap_treealert" ("reported_by_id");
+CREATE INDEX "treemap_treealert_tree_id" ON "treemap_treealert" ("tree_id");
+CREATE INDEX "treemap_treeaction_reported_by_id" ON "treemap_treeaction" ("reported_by_id");
+CREATE INDEX "treemap_treeaction_tree_id" ON "treemap_treeaction" ("tree_id");
+COMMIT;

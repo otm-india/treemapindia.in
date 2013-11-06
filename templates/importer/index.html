@@ -1,0 +1,47 @@
+{% extends "template_2.html" %}
+
+{% load url from future %}
+
+{% block extrahead %}
+    {% load compressed %}
+    {% compressed_js 'map' %}
+<!-- <script> importer js </script> -->
+{% endblock %}
+
+{% block content_body_top %}
+{% endblock %}
+
+
+{% block middle_panel %}
+<h1>Tree Import</h1>
+<form method="POST" action="{% url 'importer.views.create' %}" enctype="multipart/form-data">
+<input type="hidden" name="type" value="tree"></input>
+File to Upload: <input type="file" name="file"></input>
+<input type="submit" name="go"></input>
+</form>
+
+<h1>Species Import</h1>
+<form method="POST" action="{% url 'importer.views.create' %}" enctype="multipart/form-data">
+<input type="hidden" name="type" value="species"></input>
+File to Upload: <input type="file" name="file"></input>
+<input type="submit" name="go"></input>
+</form>
+{% endblock %}
+
+{% block right_panel %}
+{% endblock right_panel %}
+
+
+{% block content_body_bottom %}
+{% endblock %}
+
+
+
+{% block left_panel %}
+{% endblock left_panel %}
+
+
+
+
+{% block endpage %}
+{% endblock endpage %}
